@@ -1,5 +1,5 @@
 import { describe, expect } from "bun:test"
-import { Cause, Deferred, Effect, Exit, Fiber, Layer, Ref, Schema, Stream } from "effect"
+import { Cause, Deferred, Effect, Exit, Fiber, Layer, Option, Ref, Schema, Stream } from "effect"
 import { Bus } from "@opencode/core/bus"
 import { Event } from "@opencode/schema/event"
 import { Session } from "@opencode/schema/session"
@@ -734,6 +734,42 @@ describe("Bus", () => {
 
       expect(received[0]?.type).toBe(DurableMessage.type)
       expect(received[0]?.data).toEqual(durableData(aggregateID, "hello"))
+    }),
+  )
+
+  it.effect("stores the recent compaction events older versions require, and reads without it", () =>
+    Effect.gen(function* () {
+      const bus = yield* Bus.Service
+      const { db } = yield* Database.Service
+      const sessionID = Session.ID.create()
+      const live = yield* bus
+        .subscribe(SessionEvent.Compaction.Ended)
+        .pipe(Stream.runHead, Effect.forkScoped({ startImmediately: true }))
+      yield* bus.publish(SessionEvent.Compaction.Started, { sessionID, reason: "auto" })
+      yield* bus.publishAll([[SessionEvent.Compaction.Ended, { sessionID, reason: "auto", text: "summary" }]])
+      const rows = yield* db
+        .select()
+        .from(EventTable)
+        .where(eq(EventTable.aggregate_id, sessionID))
+        .all()
+        .pipe(Effect.orDie)
+      expect(rows.map((row) => row.data.recent)).toEqual(["", ""])
+      expect(Option.getOrThrow(yield* Fiber.join(live)).data).not.toHaveProperty("recent")
+
+      // An event stored before v2.1 with kept text replays idempotently in its upgraded shape.
+      const old = Session.ID.create()
+      const event = {
+        id: Event.ID.create(),
+        created: 1,
+        type: Bus.versionedType(SessionEvent.Compaction.Ended.type, 1),
+        seq: 0,
+        aggregateID: old,
+        data: { sessionID: old, reason: "auto", text: "summary", recent: "[User]: kept" },
+      }
+      yield* bus.replay(event)
+      yield* bus.replay(event)
+      const logged = Array.from(yield* bus.log({ aggregateID: old }).pipe(Stream.runCollect))
+      expect(logged.find((item) => item.type === SessionEvent.Compaction.Ended.type)).not.toHaveProperty("data.recent")
     }),
   )
 

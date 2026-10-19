@@ -35,7 +35,7 @@ type MessageEvent = Exclude<
 
 const encodeMessage = (message: SessionMessage.Info) => {
   const encoded = Schema.encodeSync(SessionMessage.Info)(message)
-  return { ...SessionLegacy.storedMessage(encoded.type, encoded), id: encoded.id, type: encoded.type }
+  return SessionLegacy.storedMessage(encoded.type, encoded)
 }
 
 export class SessionAlreadyProjected extends Error {}

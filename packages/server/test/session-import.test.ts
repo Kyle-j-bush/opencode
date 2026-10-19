@@ -87,7 +87,7 @@ it.live("upgrades native data in transcripts exported before v2.1", () =>
           status: "completed",
           reason: "manual",
           summary: "Summary",
-          recent: "",
+          recent: "[User]: kept",
           providerState: { compaction: "kept" },
           time: { created: 3 },
         },
@@ -105,7 +105,7 @@ it.live("upgrades native data in transcripts exported before v2.1", () =>
             { type: "tool", native: { call: "kept" }, providerResultState: { result: "kept" } },
           ],
         },
-        { id: "msg_compaction", native: { compaction: "kept" } },
+        { id: "msg_compaction", native: { compaction: "kept" }, metadata: { recent: "[User]: kept" } },
         { id: "msg_moved", location: { directory: "/moved" } },
       ],
     })

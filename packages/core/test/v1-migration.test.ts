@@ -678,7 +678,8 @@ describe("V1Migration.transformSession", () => {
       reason: "auto",
       summary: "summary",
       metadata: { recent: "[User]: question\n\n[Assistant]: answer" },
-      recent: "",
+      // Older versions read it from here after a downgrade.
+      recent: "[User]: question\n\n[Assistant]: answer",
     })
     expect(result.session.agent).toBe("existing")
     expect(result.session.model).toEqual(existing.model)
