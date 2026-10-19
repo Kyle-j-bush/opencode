@@ -46,7 +46,10 @@ describe("SessionLegacy", () => {
 
   test.each([
     ["session.tool.success.2", { ...ref, id: "call", content: [{ type: "text", text: "done" }], executed: true }],
-    ["session.tool.failed.2", { ...ref, id: "call", error: { type: "tool.execution", message: "failed" }, executed: true }],
+    [
+      "session.tool.failed.2",
+      { ...ref, id: "call", error: { type: "tool.execution", message: "failed" }, executed: true },
+    ],
   ])("upgrades %s result native data", (type, data) => {
     expect(decode(type, { ...data, resultState: native })).toMatchObject({ native })
   })

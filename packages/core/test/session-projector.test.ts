@@ -822,7 +822,11 @@ describe("SessionProjector", () => {
         .pipe(Effect.orDie)
       expect(row?.data).toMatchObject({
         content: [
-          { id: "succeeded", native: { call: "succeeded" }, state: { status: "completed", native: { result: "succeeded" } } },
+          {
+            id: "succeeded",
+            native: { call: "succeeded" },
+            state: { status: "completed", native: { result: "succeeded" } },
+          },
           { id: "failed", native: { call: "failed" }, state: { status: "error" } },
         ],
       })

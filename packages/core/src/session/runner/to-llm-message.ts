@@ -206,9 +206,7 @@ const assistant = (message: SessionMessage.Assistant, model: Model.Ref, provider
   })
   const results = message.content
     .filter((item): item is SessionMessage.AssistantTool => item.type === "tool" && item.executed !== true)
-    .map((item) =>
-      toolResult(item, reuseProviderMetadata ? providerMetadataKey : undefined),
-    )
+    .map((item) => toolResult(item, reuseProviderMetadata ? providerMetadataKey : undefined))
     .filter((message) => message !== undefined)
     .map(Message.tool)
   if (meaningful.length === 0) return results
