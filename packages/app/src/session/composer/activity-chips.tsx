@@ -2,7 +2,7 @@ import { Icon } from "@opencode/ui/icon"
 import { IconButton } from "@opencode/ui/icon-button"
 import { Menu } from "@opencode/ui/menu"
 import { SessionProgressIndicatorV2 } from "@opencode/session-ui/v2/session-progress-indicator-v2"
-import { createEffect, createSignal, For, Show } from "solid-js"
+import { createEffect, createSignal, For, onCleanup, Show } from "solid-js"
 import { useLanguage } from "@/runtime/i18n/language"
 import "./activity-chips.css"
 
@@ -13,6 +13,32 @@ export type SessionActivityItem = {
   agent?: string
   sessionID?: string
   target: string
+  // When the work started running, from the server's record of it.
+  started: number
+}
+
+type DurationKey =
+  | "ui.message.duration.seconds"
+  | "ui.message.duration.minutesSeconds"
+  | "ui.message.duration.hoursMinutes"
+
+// 12s, 1m 05s, 1h 02m: the trailing unit is padded so ticking keeps the same digit count.
+export function formatElapsed(ms: number, t: (key: DurationKey, params: Record<string, string>) => string) {
+  const total = Math.max(0, Math.floor(ms / 1000))
+  const pad = (value: number) => String(value).padStart(2, "0")
+
+  if (total < 60) return t("ui.message.duration.seconds", { count: String(total) })
+
+  if (total < 3600)
+    return t("ui.message.duration.minutesSeconds", {
+      minutes: String(Math.floor(total / 60)),
+      seconds: pad(total % 60),
+    })
+
+  return t("ui.message.duration.hoursMinutes", {
+    hours: String(Math.floor(total / 3600)),
+    minutes: pad(Math.floor(total / 60) % 60),
+  })
 }
 
 // Live work above the composer, one capsule like the iOS app's background-work summary.
@@ -40,6 +66,30 @@ export function SessionActivityChips(props: {
       props.onStop(item)
     },
   })
+
+  // One clock for every row, ticking only while the panel is open.
+  const [open, setOpen] = createSignal(false)
+  const [now, setNow] = createSignal(Date.now())
+  createEffect(() => {
+    if (!open()) return
+
+    setNow(Date.now())
+    const timer = setInterval(() => setNow(Date.now()), 1000)
+    onCleanup(() => clearInterval(timer))
+  })
+
+  // The run time and the stop button share the row's end; hovering a stoppable row swaps one for the other.
+  const end = (item: SessionActivityItem) => (
+    <span data-slot="session-activity-end">
+      <span
+        data-slot="session-activity-elapsed"
+        class="text-[12px] tabular-nums whitespace-nowrap text-v2-text-text-muted"
+      >
+        {formatElapsed(now() - item.started, language.t)}
+      </span>
+      {stop(item)}
+    </span>
+  )
 
   const stop = (item: SessionActivityItem) => (
     <Show when={stoppable(item)}>
@@ -78,7 +128,7 @@ export function SessionActivityChips(props: {
   return (
     <Show when={active()}>
       <div data-component="session-activity-chips" class="pointer-events-none flex items-center pb-2">
-        <Menu gutter={6} placement="top-start">
+        <Menu gutter={6} placement="top-start" onOpenChange={setOpen}>
           <Menu.Trigger
             as="button"
             type="button"
@@ -105,14 +155,10 @@ export function SessionActivityChips(props: {
                             ? `${item.agent[0].toUpperCase()}${item.agent.slice(1)}`
                             : language.t("ui.tool.agent.default")}
                         </span>
-                        <span
-                          dir="auto"
-                          class="min-w-0 flex-1 truncate text-v2-text-text-muted"
-                          classList={{ "me-1.5": !stoppable(item) }}
-                        >
+                        <span dir="auto" class="min-w-0 flex-1 truncate text-v2-text-text-muted">
                           {item.label}
                         </span>
-                        {stop(item)}
+                        {end(item)}
                       </Menu.Item>
                     )}
                   </For>
@@ -133,7 +179,7 @@ export function SessionActivityChips(props: {
                         <span dir="ltr" class="min-w-0 flex-1 truncate font-mono text-[12px] text-v2-text-text-base">
                           {item.label}
                         </span>
-                        {stop(item)}
+                        {end(item)}
                       </Menu.Item>
                     )}
                   </For>

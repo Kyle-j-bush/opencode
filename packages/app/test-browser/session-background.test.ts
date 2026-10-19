@@ -83,15 +83,23 @@ describe("createSessionBackground", () => {
         shells: () => [],
       })
 
-      expect(background.tasks()).toEqual([{ id: "child", type: "subagent", label: "child", agent: "explore" }])
+      expect(background.tasks()).toEqual([
+        { id: "child", type: "subagent", label: "child", agent: "explore", started: 0 },
+      ])
       dispose()
     })
   })
 
   test("joins live tasks while idle without rescanning history, then switches sessions", () => {
     createRoot((dispose) => {
-      const [store, setStore] = createStore({
-        id: "root" as string | undefined,
+      const [store, setStore] = createStore<{
+        id: string | undefined
+        messages: ReturnType<typeof assistant>[]
+        sessions: SessionInfo[]
+        status: Record<string, "idle" | "running">
+        shells: ShellInfo[]
+      }>({
+        id: "root",
         messages: [
           assistant("assistant", [
             tool("shell-part", "shell", { status: "running", shellID: "shell" }, { command: "old command" }),
@@ -99,8 +107,8 @@ describe("createSessionBackground", () => {
           ]),
         ],
         sessions: [session("live-child"), session("child")],
-        status: { root: "idle", child: "idle", "live-child": "idle" } as Record<string, "idle" | "running">,
-        shells: [{ ...shell("shell", "command"), status: "exited" as ShellInfo["status"] }],
+        status: { root: "idle", child: "idle", "live-child": "idle" },
+        shells: [{ ...shell("shell", "command"), status: "exited" }],
       })
 
       let scans = 0
@@ -130,9 +138,9 @@ describe("createSessionBackground", () => {
       setStore("shells", 0, "command", "updated command")
       const live = background.tasks()
       expect(live).toEqual([
-        { id: "child", type: "subagent", label: "renamed" },
-        { id: "live-child", type: "subagent", label: "live-child" },
-        { id: "shell", type: "shell", label: "updated command" },
+        { id: "child", type: "subagent", label: "renamed", started: 0 },
+        { id: "live-child", type: "subagent", label: "live-child", started: 0 },
+        { id: "shell", type: "shell", label: "updated command", started: 0 },
       ])
       expect(background.blocking()).toBe(blocking)
       expect(scans).toBe(1)
@@ -153,7 +161,11 @@ describe("createSessionBackground", () => {
 
   test("tracks blocking, backgrounding, and completion through nested store updates", () => {
     createRoot((dispose) => {
-      const [store, setStore] = createStore({
+      const [store, setStore] = createStore<{
+        messages: ReturnType<typeof assistant>[]
+        notification: ReturnType<typeof notification>
+        status: Record<string, "idle" | "running">
+      }>({
         messages: [
           assistant("earlier", [tool("old-part", "subagent", { sessionID: "old-child" }, {}, "running")]),
           assistant("current", [
@@ -163,7 +175,7 @@ describe("createSessionBackground", () => {
           assistant("completed", [], 0),
         ],
         notification: notification("notice", { source: "subagent", childID: "other-child" }),
-        status: { child: "running", "old-child": "running" } as Record<string, "idle" | "running">,
+        status: { child: "running", "old-child": "running" },
       })
 
       const messages = store.messages
@@ -177,8 +189,8 @@ describe("createSessionBackground", () => {
       })
 
       expect(background.blocking()).toEqual([
-        { type: "subagent", partID: "child-part", id: "child", label: undefined },
-        { type: "shell", partID: "shell-part", id: undefined, label: "build" },
+        { type: "subagent", partID: "child-part", id: "child", label: undefined, started: 0 },
+        { type: "shell", partID: "shell-part", id: undefined, label: "build", started: 0 },
       ])
       expect(background.tasks().map((task) => task.id)).toEqual(["old-child"])
 
@@ -198,6 +210,40 @@ describe("createSessionBackground", () => {
       setStore("messages", [0, 1], "time", "completed", 1)
       expect(background.blocking()).toEqual([])
       expect(background.tasks().map((task) => task.id)).toEqual(["old-child", "shell"])
+      dispose()
+    })
+  })
+
+  test("starts each task when the server says it began running", () => {
+    createRoot((dispose) => {
+      const timed = (part: SessionMessageAssistantTool, time: SessionMessageAssistantTool["time"]) => ({
+        ...part,
+        time,
+      })
+
+      const background = createSessionBackground({
+        sessionID: () => "root",
+        messages: () => [
+          assistant("earlier", [
+            timed(tool("child-part", "subagent", { status: "running", sessionID: "child" }), { created: 10, ran: 11 }),
+            timed(tool("shell-part", "shell", { status: "running", shellID: "shell" }), { created: 20 }),
+          ]),
+          assistant("current", [
+            timed(tool("blocking-part", "shell", {}, { command: "build" }, "running"), { created: 30, ran: 31 }),
+          ]),
+        ],
+        sessions: () => [{ ...session("live-child"), time: { created: 40, updated: 41 } }],
+        status: () => "running",
+        shells: () => [{ ...shell("live-shell", "serve"), time: { started: 50 } }],
+      })
+
+      expect(background.blocking().map((task) => task.started)).toEqual([31])
+      expect(Object.fromEntries(background.tasks().map((task) => [task.id, task.started]))).toEqual({
+        child: 11,
+        "live-child": 40,
+        shell: 20,
+        "live-shell": 50,
+      })
       dispose()
     })
   })

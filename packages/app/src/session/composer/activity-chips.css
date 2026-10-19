@@ -31,17 +31,52 @@
     padding-inline-end: 4px;
   }
 
-  /* Hidden rather than removed, so revealing it on hover does not resize the panel. */
+  /*
+   * The run time and the stop button stack in one cell, so swapping them on hover does not resize the panel.
+   * The minimum width fits "59m 59s", so the panel only grows when a run passes an hour.
+   */
+  [data-slot="session-activity-end"] {
+    display: grid;
+    flex: none;
+    align-items: center;
+    justify-items: end;
+    min-width: 7ch;
+    margin-inline-start: 6px;
+
+    > * {
+      grid-area: 1 / 1;
+    }
+  }
+
+  /* Run times end 8px in on every row, like the glyphs start, whether or not a stop button follows. */
+  [data-component="menu-v2-item"][data-stoppable] [data-slot="session-activity-elapsed"] {
+    padding-inline-end: 4px;
+  }
+
   [data-slot="session-activity-stop"] {
     visibility: hidden;
   }
 
-  [data-component="menu-v2-item"]:is(:hover, [data-highlighted]) [data-slot="session-activity-stop"] {
-    visibility: visible;
+  [data-component="menu-v2-item"][data-stoppable]:is(:hover, [data-highlighted]) {
+    [data-slot="session-activity-stop"] {
+      visibility: visible;
+    }
+
+    [data-slot="session-activity-elapsed"] {
+      visibility: hidden;
+    }
   }
 
+  /* Without hover, the stop button stays visible and the run time sits before it. */
   @media (hover: none) {
-    [data-slot="session-activity-stop"] {
+    [data-slot="session-activity-end"] {
+      display: flex;
+      gap: 2px;
+    }
+
+    [data-slot="session-activity-stop"],
+    [data-component="menu-v2-item"][data-stoppable]:is(:hover, [data-highlighted])
+      [data-slot="session-activity-elapsed"] {
       visibility: visible;
     }
   }

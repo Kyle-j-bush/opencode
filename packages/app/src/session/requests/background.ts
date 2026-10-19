@@ -1,9 +1,22 @@
-import type { SessionInfo, SessionMessageAssistant, SessionMessageInfo, ShellInfo } from "@opencode/client/promise"
+import type {
+  JsonValue,
+  SessionInfo,
+  SessionMessageAssistant,
+  SessionMessageInfo,
+  ShellInfo,
+} from "@opencode/client/promise"
+import { Option, Schema } from "effect"
 import { createMemo } from "solid-js"
 
+// `started` is when the work began running: the tool call's run time, the child session's creation, or the shell's start.
 type Task =
-  | { id: string; type: "subagent"; label: string; agent?: string }
-  | { id: string; type: "shell"; label: string }
+  | { id: string; type: "subagent"; label: string; agent?: string; started: number }
+  | { id: string; type: "shell"; label: string; started: number }
+
+const decodeString = Schema.decodeUnknownOption(Schema.String)
+
+// Tool input and metadata are open JSON, so a field of the wrong type reads as absent.
+const text = (value: JsonValue | undefined) => Option.getOrUndefined(decodeString(value))
 
 export function createSessionBackground(input: {
   sessionID: () => string | undefined
@@ -14,19 +27,23 @@ export function createSessionBackground(input: {
 }) {
   const history = createMemo(() => {
     const completed = new Set<string>()
-    const subagents: { id: string; type: "subagent"; label: string; agent: string | undefined }[] = []
-    const shells: { partID: string; task: { id: string; type: "shell"; label: string } }[] = []
+    const subagents: { id: string; type: "subagent"; label: string; agent: string | undefined; started: number }[] = []
+    const shells: { partID: string; task: { id: string; type: "shell"; label: string; started: number } }[] = []
     const id = input.sessionID()
+
+    const complete = (value: JsonValue | undefined) => {
+      const done = text(value)
+
+      if (done) completed.add(done)
+    }
 
     const assistant = (id ? input.messages(id) : []).reduce<SessionMessageAssistant | undefined>((latest, message) => {
       if (message.type === "synthetic") {
-        if (message.metadata?.source === "subagent" && typeof message.metadata.childID === "string")
-          completed.add(message.metadata.childID)
+        if (message.metadata?.source === "subagent") complete(message.metadata.childID)
 
         if (message.metadata?.source === "shell") {
-          if (typeof message.metadata.shellID === "string") completed.add(message.metadata.shellID)
-
-          if (typeof message.metadata.jobID === "string") completed.add(message.metadata.jobID)
+          complete(message.metadata.shellID)
+          complete(message.metadata.jobID)
         }
 
         return latest
@@ -39,29 +56,27 @@ export function createSessionBackground(input: {
         if (part.state.status !== "completed" || part.state.metadata?.status !== "running") return
 
         if (part.name === "subagent") {
-          const sessionID = part.state.metadata.sessionID
+          const sessionID = text(part.state.metadata.sessionID)
 
-          if (typeof sessionID !== "string") return
-          const description = part.state.input.description
-          const agent = part.state.input.agent
+          if (!sessionID) return
           subagents.push({
             id: sessionID,
             type: "subagent",
-            label: typeof description === "string" ? description : sessionID,
-            agent: typeof agent === "string" ? agent : undefined,
+            label: text(part.state.input.description) ?? sessionID,
+            agent: text(part.state.input.agent),
+            started: part.time.ran ?? part.time.created,
           })
 
           return
         }
 
-        const shellID = part.state.metadata.shellID
-        const command = part.state.input.command
         shells.push({
           partID: part.id,
           task: {
-            id: typeof shellID === "string" ? shellID : part.id,
+            id: text(part.state.metadata.shellID) ?? part.id,
             type: "shell",
-            label: typeof command === "string" ? command : part.id,
+            label: text(part.state.input.command) ?? part.id,
+            started: part.time.ran ?? part.time.created,
           },
         })
       })
@@ -72,23 +87,21 @@ export function createSessionBackground(input: {
     return {
       // Completion notices can identify the shell or its original tool call.
       subagents: subagents.filter((task) => !completed.has(task.id)),
-      shells: shells
-        .filter((item) => !completed.has(item.partID) && !completed.has(item.task.id))
-        .map((item) => item.task),
+      shells: shells.flatMap((item) => (completed.has(item.partID) || completed.has(item.task.id) ? [] : [item.task])),
       blocking:
         assistant?.content.flatMap((part) => {
           if (part.type !== "tool" || part.state.status !== "running") return []
 
           if (part.name !== "shell" && part.name !== "subagent") return []
-          const value = part.name === "shell" ? part.state.metadata.shellID : part.state.metadata.sessionID
-          const label = part.name === "shell" ? part.state.input.command : part.state.input.description
+          const shell = part.name === "shell"
 
           return [
             {
-              type: part.name as "shell" | "subagent",
+              type: shell ? ("shell" as const) : ("subagent" as const),
               partID: part.id,
-              id: typeof value === "string" ? value : undefined,
-              label: typeof label === "string" ? label : undefined,
+              id: text(shell ? part.state.metadata.shellID : part.state.metadata.sessionID),
+              label: text(shell ? part.state.input.command : part.state.input.description),
+              started: part.time.ran ?? part.time.created,
             },
           ]
         }) ?? [],
@@ -115,7 +128,7 @@ export function createSessionBackground(input: {
       )
         return []
 
-      return [{ id: info.id, type: "subagent" as const, label: info.title ?? info.id }]
+      return [{ id: info.id, type: "subagent" as const, label: info.title ?? info.id, started: info.time.created }]
     })
 
     const running = input.shells().flatMap((shell) => {
@@ -128,7 +141,7 @@ export function createSessionBackground(input: {
       )
         return []
 
-      return [{ id: shell.id, type: "shell" as const, label: shell.command }]
+      return [{ id: shell.id, type: "shell" as const, label: shell.command, started: shell.time.started }]
     })
 
     return [

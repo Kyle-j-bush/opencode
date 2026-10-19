@@ -16,15 +16,16 @@ import type { SessionActivityItem } from "./activity-chips"
 // The app's default timeline preset.
 const timelineDetail = timelinePresets[2].value
 
+// Ages in milliseconds, so the panel shows seconds, minutes and an hour-long run side by side.
 const subagents = [
-  { id: "ses_child_scroll", agent: "general", description: "Investigate Linux scroll jacking" },
-  { id: "ses_child_audit", agent: "explore", description: "Audit the timeline projection" },
-  { id: "ses_child_search", agent: "explore", description: "Search for shell metadata" },
+  { id: "ses_child_scroll", agent: "general", description: "Investigate Linux scroll jacking", age: 12_000 },
+  { id: "ses_child_audit", agent: "explore", description: "Audit the timeline projection", age: 65_000 },
+  { id: "ses_child_search", agent: "explore", description: "Search for shell metadata", age: 3_000 },
 ]
 
 const shells = [
-  { id: "shl_dev", command: "bun run dev -- --port 4444" },
-  { id: "shl_test", command: "bun test --watch src/session" },
+  { id: "shl_dev", command: "bun run dev -- --port 4444", age: 3_720_000 },
+  { id: "shl_test", command: "bun test --watch src/session", age: 341_000 },
 ]
 
 const subagentItem = (index: number): SessionActivityItem => {
@@ -37,6 +38,7 @@ const subagentItem = (index: number): SessionActivityItem => {
     agent: value.agent,
     sessionID: value.id,
     target: value.id,
+    started: Date.now() - value.age,
   }
 }
 
@@ -45,6 +47,7 @@ const shellItem = (index: number): SessionActivityItem => ({
   type: "shell",
   label: shells[index % shells.length].command,
   target: shells[index % shells.length].id,
+  started: Date.now() - shells[index % shells.length].age,
 })
 
 // The timeline follows new work at the bottom, like a pinned session.
