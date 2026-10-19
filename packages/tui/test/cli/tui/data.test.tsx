@@ -2979,7 +2979,8 @@ test("settles pending tools when a live failure arrives", async () => {
     expect(tool.state.metadata).toBeUndefined()
     expect(tool.state.content).toBeUndefined()
     expect(tool.executed).toBe(false)
-    expect(tool.native).toEqual({ call: true, result: true })
+    expect(tool.native).toEqual({ call: true })
+    expect(tool.state.native).toEqual({ result: true })
     expect(sync.session.message.list("session-1").map((message) => message.type)).toEqual([
       "agent-switched",
       "model-switched",

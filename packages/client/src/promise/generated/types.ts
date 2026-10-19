@@ -958,6 +958,7 @@ export type SessionMessageToolStateCompleted = {
   input: { [x: string]: JsonValue }
   content: [ToolContent, ...Array<ToolContent>]
   metadata?: { [x: string]: JsonValue }
+  native?: SessionMessageNative
 }
 
 export type SessionMessageToolStateError = {
@@ -966,6 +967,7 @@ export type SessionMessageToolStateError = {
   error: SessionStructuredError
   content?: [ToolContent, ...Array<ToolContent>]
   metadata?: { [x: string]: JsonValue }
+  native?: SessionMessageNative
 }
 
 export type SessionAgentSelected = {
@@ -1901,6 +1903,7 @@ export type SessionMessageToolStateCompleted1 = {
   input: { [x: string]: any }
   content: [ToolContent1, ...Array<ToolContent1>]
   metadata?: { [x: string]: JsonValue }
+  native?: SessionMessageNative1
 }
 
 export type SessionMessageToolStateError1 = {
@@ -1909,6 +1912,7 @@ export type SessionMessageToolStateError1 = {
   error: SessionStructuredError
   content?: [ToolContent1, ...Array<ToolContent1>]
   metadata?: { [x: string]: JsonValue }
+  native?: SessionMessageNative1
 }
 
 export type FormField =

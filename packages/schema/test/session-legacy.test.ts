@@ -15,7 +15,7 @@ const toolPart = {
   name: "search",
   providerState: native,
   providerResultState: result,
-  state: { status: "streaming", input: "" },
+  state: { status: "completed", input: {}, content: [{ type: "text", text: "done" }] },
   time: { created: 0 },
 }
 
@@ -61,7 +61,7 @@ describe("SessionLegacy", () => {
     ).toMatchObject({
       content: [
         { type: "text", native },
-        { type: "tool", native: { ...native, ...result }, state: { status: "streaming", input: "" } },
+        { type: "tool", native, state: { status: "completed", native: result } },
       ],
     })
   })
@@ -73,6 +73,13 @@ describe("SessionLegacy", () => {
     expect(SessionLegacy.event("session.tool.success", success)).toBe(success)
     const user = { type: "user", text: "hi", state: native }
     expect(SessionLegacy.message("user", user)).toBe(user)
+  })
+
+  test("drops result native data from an unfinished tool", () => {
+    const running = { status: "running", input: {}, metadata: {} }
+    expect(SessionLegacy.message("assistant", { content: [{ ...toolPart, state: running }] }).content).toEqual([
+      { type: "tool", id: "call", name: "search", native, state: running, time: toolPart.time },
+    ])
   })
 
   test("keeps the current name when a payload carries both", () => {
@@ -91,8 +98,8 @@ describe("SessionLegacy", () => {
           type: "tool",
           id: "call",
           name: "search",
-          native: { ...native, ...result },
-          state: toolPart.state,
+          native,
+          state: { ...toolPart.state, native: result },
           time: toolPart.time,
         },
       ],

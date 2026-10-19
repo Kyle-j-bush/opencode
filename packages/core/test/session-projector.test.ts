@@ -720,7 +720,7 @@ describe("SessionProjector", () => {
         content: [
           { type: "text", native: { signature: "text" } },
           { type: "reasoning", native: { signature: "reasoning" } },
-          { type: "tool", native: { call: "kept", result: "kept" } },
+          { type: "tool", native: { call: "kept" }, state: { native: { result: "kept" } } },
         ],
       })
       expect(readCompaction).toMatchObject({ native: { compaction: "kept" } })
@@ -766,7 +766,7 @@ describe("SessionProjector", () => {
         content: [
           { type: "text", native: { signature: "text" } },
           { type: "reasoning", native: { signature: "reasoning" } },
-          { type: "tool", native: { call: "kept", result: "kept" } },
+          { type: "tool", native: { call: "kept" }, state: { native: { result: "kept" } } },
         ],
       })
       expect(rewritten.content.map((part: Record<string, unknown>) => Object.keys(part).toSorted())).toEqual([
@@ -777,7 +777,7 @@ describe("SessionProjector", () => {
     }),
   )
 
-  it.effect("merges tool result native data into the call's native data", () =>
+  it.effect("projects tool result native data onto the finished state", () =>
     Effect.gen(function* () {
       const db = yield* seedSession()
       const assistantMessageID = SessionMessage.ID.make("msg_tools")
@@ -822,7 +822,7 @@ describe("SessionProjector", () => {
         .pipe(Effect.orDie)
       expect(row?.data).toMatchObject({
         content: [
-          { id: "succeeded", native: { call: "succeeded", result: "succeeded" }, state: { status: "completed" } },
+          { id: "succeeded", native: { call: "succeeded" }, state: { status: "completed", native: { result: "succeeded" } } },
           { id: "failed", native: { call: "failed" }, state: { status: "error" } },
         ],
       })

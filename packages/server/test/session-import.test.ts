@@ -102,7 +102,7 @@ it.live("upgrades native data in transcripts exported before v2.1", () =>
           content: [
             { type: "text", native: { signature: "text" } },
             { type: "reasoning", native: { signature: "reasoning" } },
-            { type: "tool", native: { call: "kept", result: "kept" } },
+            { type: "tool", native: { call: "kept" }, state: { native: { result: "kept" } } },
           ],
         },
         { id: "msg_compaction", native: { compaction: "kept" } },

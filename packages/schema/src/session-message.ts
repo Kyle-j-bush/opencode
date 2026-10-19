@@ -36,10 +36,7 @@ const Base = {
   time: Schema.Struct({ created: DateTimeUtcFromMillis }),
 }
 
-/**
- * Provider-owned replay data, keyed by the producing provider's metadata fields and echoed back verbatim. A tool's
- * result data is merged into its call data, so adapters must not reuse a key with a different value across the two.
- */
+/** Provider-owned replay data, keyed by the producing provider's metadata fields and echoed back verbatim. */
 export const Native = Schema.Record(Schema.String, Schema.Unknown).annotate({
   identifier: "Session.Message.Native",
 })
@@ -146,6 +143,7 @@ export const ToolStateCompleted = Schema.Struct({
   input: Schema.Record(Schema.String, Schema.Unknown),
   content: Schema.NonEmptyArray(Content),
   metadata: Schema.Record(Schema.String, Schema.Json).pipe(optional),
+  native: Native.pipe(optional),
 }).annotate({ identifier: "Session.Message.ToolState.Completed" })
 
 export interface ToolStateError extends Schema.Schema.Type<typeof ToolStateError> {}
@@ -155,6 +153,7 @@ export const ToolStateError = Schema.Struct({
   error: SessionError.Error,
   content: Schema.NonEmptyArray(Content).pipe(optional),
   metadata: Schema.Record(Schema.String, Schema.Json).pipe(optional),
+  native: Native.pipe(optional),
 }).annotate({ identifier: "Session.Message.ToolState.Error" })
 
 export const ToolState = Schema.Union([ToolStateStreaming, ToolStateRunning, ToolStateCompleted, ToolStateError]).pipe(

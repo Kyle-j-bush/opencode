@@ -2,9 +2,9 @@ export * as SessionLegacy from "./session-legacy.js"
 
 /**
  * Storage and wire compatibility for current-architecture data written before v2.1 (not V1 contracts). Native data
- * was then named `state` or `providerState`, and a tool's result data was kept apart as `resultState` or
- * `providerResultState`; stored events, projected messages, and exported transcripts keep whichever shape they were
- * written with, so these upgrade them before decoding.
+ * was then named `state` or `providerState`, and a tool's result native data `resultState` or `providerResultState`;
+ * stored events, projected messages, and exported transcripts keep whichever shape they were written with, so these
+ * upgrade them before decoding.
  */
 
 const renames: Record<string, readonly [string, string]> = {
@@ -52,12 +52,13 @@ function part(value: unknown) {
   return value
 }
 
-// Result data now merges into the tool's single `native`, as projection does for current result events.
+// Result data now lives on the finished state; an unfinished tool had none to keep.
 function toolResult(value: Record<string, unknown>) {
   if (!("providerResultState" in value)) return value
   const { providerResultState, ...rest } = value
-  if (!isRecord(providerResultState)) return rest
-  return { ...rest, native: { ...(isRecord(rest.native) ? rest.native : {}), ...providerResultState } }
+  const state = rest.state
+  if (!isRecord(state) || (state.status !== "completed" && state.status !== "error") || "native" in state) return rest
+  return { ...rest, state: { ...state, native: providerResultState } }
 }
 
 // The current name wins when a payload carries both.

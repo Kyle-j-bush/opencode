@@ -395,12 +395,13 @@ export async function runNonInteractivePrompt(input: Input) {
           id: event.data.id,
           name: current.tool,
           executed: event.data.executed,
-          native: event.data.native ? { ...current.native, ...event.data.native } : current.native,
+          native: current.native,
           state: {
             status: "completed",
             input: current.input,
             metadata: event.data.metadata,
             content: event.data.content,
+            native: event.data.native,
           },
           time: { created: current.timestamp, ran: current.timestamp, completed: time },
         }
@@ -442,13 +443,14 @@ export async function runNonInteractivePrompt(input: Input) {
           id: event.data.id,
           name: current.tool,
           executed: event.data.executed,
-          native: event.data.native ? { ...current.native, ...event.data.native } : current.native,
+          native: current.native,
           state: {
             status: "error",
             input: current.input,
             metadata,
             content,
             error: event.data.error,
+            native: event.data.native,
           },
           time: { created: current.timestamp, ran: current.timestamp, completed: time },
         }
