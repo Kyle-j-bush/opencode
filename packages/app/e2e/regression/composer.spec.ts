@@ -87,7 +87,7 @@ test("a catalog refresh cannot replace an existing session's model", async ({ pa
   ])
 })
 
-test("an existing session's model waits for its agent instead of showing a fallback", async ({ page }) => {
+test("an existing session shows its own model while its agent loads instead of a fallback", async ({ page }) => {
   const sessionID = "ses_agent_pending"
   await mockWorkspace(page, {
     name: "AgentPending",
@@ -111,7 +111,7 @@ test("an existing session's model waits for its agent instead of showing a fallb
 
   const control = page.locator('[data-action="composer-model"]')
   // The recent model must not stand in for the session's model while its agent is unresolved.
-  await expect(control).toBeHidden()
+  await expect(control).toHaveText("OpenCode / Alpha")
   agents.resolve()
   await expect(control).toHaveText("OpenCode / Alpha")
 })
@@ -375,6 +375,7 @@ test("keeps focus in a dialog that replaces the model dialog and returns it to t
     name: "ComposerDialogFocus",
     provider: provider({ id: "paid", name: "Paid", cost: { input: 1, output: 1 } }),
   })
+
   await editor.fill("keep me")
   await editor.press("End")
   await editor.press("ArrowLeft")
