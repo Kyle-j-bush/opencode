@@ -995,7 +995,7 @@ export type SessionLogOutput =
             ]
             readonly metadata?: { readonly [x: string]: Schema.Json } | undefined
             readonly executed: boolean
-            readonly resultNative?: SessionMessage.Native | undefined
+            readonly native?: SessionMessage.Native | undefined
           }
         }
       | {
@@ -1041,7 +1041,7 @@ export type SessionLogOutput =
               | undefined
             readonly metadata?: { readonly [x: string]: Schema.Json } | undefined
             readonly executed: boolean
-            readonly resultNative?: SessionMessage.Native | undefined
+            readonly native?: SessionMessage.Native | undefined
           }
         }
       | {

@@ -538,7 +538,7 @@ export namespace Tool {
       content: Schema.NonEmptyArray(Content),
       metadata: Schema.Record(Schema.String, Schema.Json).pipe(optional),
       executed: Schema.Boolean,
-      resultNative: SessionMessage.Native.pipe(optional),
+      native: SessionMessage.Native.pipe(optional),
     },
   })
   export type Success = typeof Success.Type
@@ -560,7 +560,7 @@ export namespace Tool {
       content: Schema.NonEmptyArray(Content).pipe(optional),
       metadata: Schema.Record(Schema.String, Schema.Json).pipe(optional),
       executed: Schema.Boolean,
-      resultNative: SessionMessage.Native.pipe(optional),
+      native: SessionMessage.Native.pipe(optional),
     },
   })
   export type Failed = typeof Failed.Type

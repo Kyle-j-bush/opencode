@@ -18799,7 +18799,7 @@
             "type": "string"
           },
           "native": {
-            "$ref": "#/components/schemas/Session.Message.Native_4"
+            "$ref": "#/components/schemas/Session.Message.Native_3"
           },
           "cost": {
             "$ref": "#/components/schemas/Money.USD"
@@ -18900,9 +18900,6 @@
           "native": {
             "$ref": "#/components/schemas/Session.Message.Native_2"
           },
-          "resultNative": {
-            "$ref": "#/components/schemas/Session.Message.Native_3"
-          },
           "state": {
             "anyOf": [
               {
@@ -18987,7 +18984,7 @@
             "$ref": "#/components/schemas/Model.Ref"
           },
           "native": {
-            "$ref": "#/components/schemas/Session.Message.Native_5"
+            "$ref": "#/components/schemas/Session.Message.Native_4"
           },
           "summary": {
             "type": "string"
@@ -19273,9 +19270,6 @@
         "type": "object"
       },
       "Session.Message.Native_4": {
-        "type": "object"
-      },
-      "Session.Message.Native_5": {
         "type": "object"
       },
       "Session.Message.Shell": {

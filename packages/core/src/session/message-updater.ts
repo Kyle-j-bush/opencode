@@ -345,7 +345,7 @@ export function update(adapter: Adapter, event: SessionEvent.DurableEvent) {
           const match = latestTool(draft, event.data.id)
           if (match && match.state.status === "running") {
             match.executed = event.data.executed || match.executed === true
-            match.resultNative = event.data.resultNative
+            if (event.data.native) match.native = { ...match.native, ...event.data.native }
             match.time.completed = created
             match.state = castDraft(
               SessionMessage.ToolStateCompleted.make({
@@ -363,7 +363,7 @@ export function update(adapter: Adapter, event: SessionEvent.DurableEvent) {
           const match = latestTool(draft, event.data.id)
           if (match && (match.state.status === "streaming" || match.state.status === "running")) {
             match.executed = event.data.executed || match.executed === true
-            match.resultNative = event.data.resultNative
+            if (event.data.native) match.native = { ...match.native, ...event.data.native }
             match.time.completed = created
             match.state = castDraft(
               SessionMessage.ToolStateError.make({

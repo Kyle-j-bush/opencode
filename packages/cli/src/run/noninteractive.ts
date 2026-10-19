@@ -395,8 +395,7 @@ export async function runNonInteractivePrompt(input: Input) {
           id: event.data.id,
           name: current.tool,
           executed: event.data.executed,
-          native: current.native,
-          resultNative: event.data.resultNative,
+          native: event.data.native ? { ...current.native, ...event.data.native } : current.native,
           state: {
             status: "completed",
             input: current.input,
@@ -421,7 +420,7 @@ export async function runNonInteractivePrompt(input: Input) {
               metadata: event.data.metadata,
               content: event.data.content,
               providerCall: current.provider,
-              providerResult: { executed: event.data.executed, state: event.data.resultNative },
+              providerResult: { executed: event.data.executed, state: event.data.native },
               rawInput: current.raw,
             },
             time: { start: current.timestamp, end: time },
@@ -443,8 +442,7 @@ export async function runNonInteractivePrompt(input: Input) {
           id: event.data.id,
           name: current.tool,
           executed: event.data.executed,
-          native: current.native,
-          resultNative: event.data.resultNative,
+          native: event.data.native ? { ...current.native, ...event.data.native } : current.native,
           state: {
             status: "error",
             input: current.input,
@@ -467,7 +465,7 @@ export async function runNonInteractivePrompt(input: Input) {
             error,
             metadata: {
               providerCall: current.provider,
-              providerResult: { executed: event.data.executed, state: event.data.resultNative },
+              providerResult: { executed: event.data.executed, state: event.data.native },
               rawInput: current.raw,
             },
             time: { start: current.timestamp, end: time },

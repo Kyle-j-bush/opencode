@@ -36,7 +36,10 @@ const Base = {
   time: Schema.Struct({ created: DateTimeUtcFromMillis }),
 }
 
-/** Provider-owned replay data, keyed by the producing provider's metadata fields and echoed back verbatim. */
+/**
+ * Provider-owned replay data, keyed by the producing provider's metadata fields and echoed back verbatim. A tool's
+ * result data is merged into its call data, so adapters must not reuse a key with a different value across the two.
+ */
 export const Native = Schema.Record(Schema.String, Schema.Unknown).annotate({
   identifier: "Session.Message.Native",
 })
@@ -166,7 +169,6 @@ export const AssistantTool = Schema.Struct({
   name: Schema.String,
   executed: Schema.Boolean.pipe(optional),
   native: Native.pipe(optional),
-  resultNative: Native.pipe(optional),
   state: ToolState,
   time: Schema.Struct({
     created: DateTimeUtcFromMillis,

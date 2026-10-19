@@ -132,7 +132,7 @@ test("provider-executed success derives content and retains provider result stat
       { type: "text", text: "Image read successfully" },
       { type: "file", uri: `data:image/png;base64,${base64}`, mime: "image/png" },
     ],
-    resultNative: { result: { type: "content" } },
+    native: { result: { type: "content" } },
   })
 })
 
@@ -556,7 +556,7 @@ test("provider-executed tool metadata is flattened using the route key", async (
     native: { itemId: "call" },
   })
   expect(published.find((event) => event.type === "session.tool.success.2")?.data).toMatchObject({
-    resultNative: { itemId: "result" },
+    native: { itemId: "result" },
   })
 })
 
@@ -568,21 +568,21 @@ test("binary failure emits no success event", async () => {
   expect(published.some((event) => event.type === "session.tool.failed.2")).toBe(true)
 })
 
-test("success event data can carry provider-executed result state", () => {
+test("success event data can carry provider-executed native data", () => {
   const decoded = Schema.decodeUnknownSync(SessionEvent.Tool.Success.data)({
     sessionID,
     assistantMessageID: SessionMessage.ID.create(),
     id: "call-old",
     content: [{ type: "file", uri: `data:image/png;base64,${base64}`, mime: "image/png" }],
     executed: true,
-    resultNative: {
+    native: {
       result: {
         type: "content",
         value: [{ type: "file", uri: `data:image/png;base64,${base64}`, mime: "image/png" }],
       },
     },
   })
-  expect(decoded.resultNative).toMatchObject({ result: { type: "content" } })
+  expect(decoded.native).toMatchObject({ result: { type: "content" } })
 })
 
 test("step start waits for the pending start snapshot", async () => {

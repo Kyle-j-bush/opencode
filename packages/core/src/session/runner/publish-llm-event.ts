@@ -531,7 +531,6 @@ export const createLLMEventPublisher = (bus: Pick<Bus.Interface, "publish">, inp
         }
         tool.settled = true
         const executed = event.providerExecuted === true || tool.providerExecuted
-        const resultNative = native(event.providerMetadata)
         if (event.result.type === "error") {
           yield* bus.publish(SessionEvent.Tool.Failed, {
             sessionID: input.sessionID,
@@ -540,7 +539,7 @@ export const createLLMEventPublisher = (bus: Pick<Bus.Interface, "publish">, inp
             error: { type: "tool.execution", message: stringify(event.result.value) },
             ...failureSnapshot(tool),
             executed,
-            resultNative,
+            native: native(event.providerMetadata),
           })
           return
         }
@@ -550,7 +549,7 @@ export const createLLMEventPublisher = (bus: Pick<Bus.Interface, "publish">, inp
           id: event.id,
           content: hostedContent(event.result),
           executed,
-          resultNative,
+          native: native(event.providerMetadata),
         })
         return
       }
@@ -571,7 +570,7 @@ export const createLLMEventPublisher = (bus: Pick<Bus.Interface, "publish">, inp
               : { type: "tool.execution", message: event.message },
           ...failureSnapshot(tool),
           executed: tool.providerExecuted,
-          resultNative: native(event.providerMetadata),
+          native: native(event.providerMetadata),
         })
         return
       }

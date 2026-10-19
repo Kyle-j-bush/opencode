@@ -8,13 +8,13 @@ const ref = { sessionID: "ses_legacy", assistantMessageID: "msg_legacy" }
 const tokens = { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } }
 const native = { signature: "kept" }
 const textPart = { type: "text", text: "hi", state: native }
-const resultNative = { result: "kept" }
+const result = { result: "kept" }
 const toolPart = {
   type: "tool",
   id: "call",
   name: "search",
   providerState: native,
-  providerResultState: resultNative,
+  providerResultState: result,
   state: { status: "streaming", input: "" },
   time: { created: 0 },
 }
@@ -48,7 +48,7 @@ describe("SessionLegacy", () => {
     ["session.tool.success.2", { ...ref, id: "call", content: [{ type: "text", text: "done" }], executed: true }],
     ["session.tool.failed.2", { ...ref, id: "call", error: { type: "tool.execution", message: "failed" }, executed: true }],
   ])("upgrades %s result native data", (type, data) => {
-    expect(decode(type, { ...data, resultState: native })).toMatchObject({ resultNative: native })
+    expect(decode(type, { ...data, resultState: native })).toMatchObject({ native })
   })
 
   test("upgrades replaced assistant content without touching tool status", () => {
@@ -61,7 +61,7 @@ describe("SessionLegacy", () => {
     ).toMatchObject({
       content: [
         { type: "text", native },
-        { type: "tool", native, resultNative, state: { status: "streaming", input: "" } },
+        { type: "tool", native: { ...native, ...result }, state: { status: "streaming", input: "" } },
       ],
     })
   })
@@ -69,8 +69,8 @@ describe("SessionLegacy", () => {
   test("leaves current and unrelated payloads unchanged", () => {
     const current = { ...ref, ordinal: 0, text: "hi", native }
     expect(SessionLegacy.event("session.text.ended", current)).toBe(current)
-    const result = { ...ref, id: "call", content: [], executed: true, resultNative: native }
-    expect(SessionLegacy.event("session.tool.success", result)).toBe(result)
+    const success = { ...ref, id: "call", content: [], executed: true, native }
+    expect(SessionLegacy.event("session.tool.success", success)).toBe(success)
     const user = { type: "user", text: "hi", state: native }
     expect(SessionLegacy.message("user", user)).toBe(user)
   })
@@ -87,7 +87,14 @@ describe("SessionLegacy", () => {
       native,
       content: [
         { type: "text", text: "hi", native },
-        { type: "tool", id: "call", name: "search", native, resultNative, state: toolPart.state, time: toolPart.time },
+        {
+          type: "tool",
+          id: "call",
+          name: "search",
+          native: { ...native, ...result },
+          state: toolPart.state,
+          time: toolPart.time,
+        },
       ],
     })
     expect(SessionLegacy.message("compaction", { status: "completed", providerState: native })).toEqual({

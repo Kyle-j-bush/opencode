@@ -1315,8 +1315,7 @@ export async function createSessionTransport(input: StreamInput): Promise<Sessio
         id: event.data.id,
         name: part?.name ?? "tool",
         executed: event.data.executed,
-        native: part?.native,
-        resultNative: event.data.resultNative,
+        native: event.data.native ? { ...part?.native, ...event.data.native } : part?.native,
         state: failed
           ? {
               status: "error",

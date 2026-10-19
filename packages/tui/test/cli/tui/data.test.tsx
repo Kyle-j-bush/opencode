@@ -2952,7 +2952,7 @@ test("settles pending tools when a live failure arrives", async () => {
         id: "call-1",
         error: { type: "unknown", message: "aborted" },
         executed: false,
-        resultNative: { result: true },
+        native: { result: true },
       },
     })
 
@@ -2979,8 +2979,7 @@ test("settles pending tools when a live failure arrives", async () => {
     expect(tool.state.metadata).toBeUndefined()
     expect(tool.state.content).toBeUndefined()
     expect(tool.executed).toBe(false)
-    expect(tool.native).toEqual({ call: true })
-    expect(tool.resultNative).toEqual({ result: true })
+    expect(tool.native).toEqual({ call: true, result: true })
     expect(sync.session.message.list("session-1").map((message) => message.type)).toEqual([
       "agent-switched",
       "model-switched",
