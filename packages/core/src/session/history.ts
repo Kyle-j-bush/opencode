@@ -122,8 +122,8 @@ const messageEntries = Effect.fnUntraced(function* (
 
 /**
  * A summary compaction references its kept messages by `metadata.firstKeptMessageID` instead of storing them, so
- * history rebuilds their text from the messages between that one and the compaction. Compactions written before
- * the reference existed have none and keep their stored `recent` text.
+ * history rebuilds their text from the messages between that one and the compaction, in memory only (see
+ * `SessionRecentText.kept`). Compactions written before the reference have none and keep the text they stored.
  */
 const withRecentText = Effect.fnUntraced(function* (
   db: DatabaseService,
@@ -159,7 +159,7 @@ const withRecentText = Effect.fnUntraced(function* (
     .pipe(Effect.orDie)
   const kept = yield* Effect.forEach(rows, decodeMessageRow)
   const recent = kept.map(SessionRecentText.messageToText).filter(Boolean).join("\n\n")
-  return [{ ...first, message: { ...compaction, recent } }, ...entries.slice(1)]
+  return [{ ...first, message: { ...compaction, metadata: { ...compaction.metadata, recent } } }, ...entries.slice(1)]
 })
 
 export const load = Effect.fn("SessionHistory.load")(function* (

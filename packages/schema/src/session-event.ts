@@ -586,7 +586,6 @@ export namespace Compaction {
     schema: {
       ...Base,
       reason: Schema.Literals(["auto", "manual"]),
-      recent: Schema.String,
       inputID: SessionMessage.ID.pipe(optional),
     },
   })
@@ -611,7 +610,6 @@ export namespace Compaction {
       native: SessionMessage.CompactionCompleted.fields.native,
       providerContext: SessionMessage.CompactionCompleted.fields.providerContext,
       text: Schema.String,
-      recent: Schema.String,
       // Repeats the internal `session.usage.recorded` figures: that event never reaches clients, and it
       // stays the accounting source for session totals and stats.
       cost: SessionMessage.CompactionCompleted.fields.cost,

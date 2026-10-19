@@ -133,7 +133,6 @@ const setup = Effect.gen(function* () {
       sessionID,
       reason: "manual",
       text: context ? "" : "local summary",
-      recent: "",
       providerContext: context,
     })
   const load = (boundary: SessionHistory.Boundary) =>
@@ -146,7 +145,7 @@ it.effect("loads and replays a persisted pre-2.0.15 media checkpoint", () =>
     const s = yield* setup
     yield* s.prepare
     yield* s.prompt("original request")
-    yield* s.bus.publish(SessionEvent.Compaction.Started, { sessionID, reason: "manual", recent: "" })
+    yield* s.bus.publish(SessionEvent.Compaction.Started, { sessionID, reason: "manual" })
     yield* s.compact(legacyContext)
     yield* s.prompt("continue")
     const history = yield* SessionHistory.load(s.db, sessionID, target)
@@ -243,7 +242,7 @@ it.effect(
       yield* s.prompt("original request")
       s.state.value = "changed instructions"
       yield* s.prepare
-      yield* s.bus.publish(SessionEvent.Compaction.Started, { sessionID, reason: "manual", recent: "" })
+      yield* s.bus.publish(SessionEvent.Compaction.Started, { sessionID, reason: "manual" })
       const completed = yield* s.compact(providerContext)
       s.state.value = "newest instructions"
       yield* s.prepare

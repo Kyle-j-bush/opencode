@@ -4,6 +4,13 @@ import type { SessionMessage } from "./message.js"
 
 const TOOL_OUTPUT_MAX_CHARS = 1_250
 
+/**
+ * The text of the messages a summary compaction kept verbatim. History rebuilds it from `metadata.firstKeptMessageID`;
+ * compactions written before that reference carry the text they stored.
+ */
+export const kept = (message: SessionMessage.CompactionCompleted) =>
+  typeof message.metadata?.recent === "string" ? message.metadata.recent : ""
+
 /** One message as the recent, verbatim part of a summary shows it. Empty for messages that part leaves out. */
 export const messageToText = (message: SessionMessage.Info): string => {
   switch (message.type) {

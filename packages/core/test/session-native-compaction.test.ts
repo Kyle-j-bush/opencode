@@ -213,7 +213,7 @@ const setup = Effect.fnUntraced(function* (options: { endpoint?: boolean } = {})
   // Opens the compaction's message as the runner does when it delivers `/compact`.
   const compact = Effect.gen(function* () {
     const inputID = SessionMessage.ID.create()
-    yield* bus.publish(SessionEvent.Compaction.Started, { sessionID, reason: "manual", recent: "", inputID })
+    yield* bus.publish(SessionEvent.Compaction.Started, { sessionID, reason: "manual", inputID })
     return yield* compaction.compact({ reason: "manual", context: yield* load, inputID })
   })
   const checkpoint = Effect.gen(function* () {
@@ -222,7 +222,7 @@ const setup = Effect.fnUntraced(function* (options: { endpoint?: boolean } = {})
     if (last?.type !== "compaction" || last.status !== "completed" || !last.providerContext)
       return yield* Effect.die("Missing native checkpoint")
     expect(last.summary).toBe("")
-    expect(last.recent).toBe("")
+    expect(last.metadata?.recent).toBeUndefined()
     // Provider compaction has no summary, so the request usage is the only visible cost of the operation.
     expect(last.tokens).toMatchObject({ input: 20, output: 4 })
     return last.providerContext
@@ -400,7 +400,6 @@ it.live("compaction hooks supply the summary instead of provider compaction", ()
       type: "compaction",
       status: "completed",
       summary: "## Objective\n- hooked summary",
-      recent: "",
       native: { responseId: "plugin" },
       metadata: { plugin: "custom" },
       tokens: { input: 10, output: 5 },

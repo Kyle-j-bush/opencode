@@ -123,7 +123,6 @@ test.each(["started", "cancelled", "failed"])(
           native,
           providerContext,
           text: "Summary",
-          recent: "Recent",
           cost: 0.01,
           tokens,
         },

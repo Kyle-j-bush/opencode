@@ -1078,7 +1078,6 @@ export type SessionLogOutput =
           readonly data: {
             readonly sessionID: Session.ID
             readonly reason: "auto" | "manual"
-            readonly recent: string
             readonly inputID?: SessionMessage.ID | undefined
           }
         }
@@ -1111,7 +1110,6 @@ export type SessionLogOutput =
                 }
               | undefined
             readonly text: string
-            readonly recent: string
             readonly cost?: Money.USD | undefined
             readonly tokens?:
               | {

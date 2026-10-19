@@ -1060,7 +1060,6 @@ export function createData(config: CreateDataInput) {
           status: "running",
           reason: event.data.reason,
           summary: "",
-          recent: event.data.recent ?? "",
           time: { created: event.created },
         })
         if (event.data.inputID) compacting.get(event.data.sessionID)?.observed.add(event.data.inputID)
@@ -1153,7 +1152,6 @@ export function createData(config: CreateDataInput) {
               native: event.data.native,
               providerContext: event.data.providerContext,
               summary: event.data.text,
-              recent: event.data.recent,
               cost: event.data.cost,
               tokens: event.data.tokens,
             })
@@ -1168,7 +1166,6 @@ export function createData(config: CreateDataInput) {
             native: event.data.native,
             providerContext: event.data.providerContext,
             summary: event.data.text,
-            recent: event.data.recent,
             cost: event.data.cost,
             tokens: event.data.tokens,
             time: { created: event.created },

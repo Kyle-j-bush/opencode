@@ -52,7 +52,7 @@ test("failed steps only override the assistant finish for content filters", () =
 test("provider compaction context is optional, versioned and JSON-only", () => {
   const decode = Schema.decodeUnknownSync(SessionEvent.Compaction.Ended.data)
   const encode = Schema.encodeSync(SessionEvent.Compaction.Ended.data)
-  const local = { sessionID: "ses_context", reason: "manual" as const, text: "summary", recent: "" }
+  const local = { sessionID: "ses_context", reason: "manual" as const, text: "summary" }
   expect(encode({ ...decode(local), providerContext: undefined })).toEqual(local)
   const providerContext = {
     version: 1 as const,

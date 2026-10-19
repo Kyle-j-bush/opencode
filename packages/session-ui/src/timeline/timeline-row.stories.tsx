@@ -207,7 +207,10 @@ function RetryAndRecoverStory() {
             ? {
                 attempt: 2,
                 at: 1_900_000_000_000,
-                error: { type: "ProviderRateLimitError" as const, message: "Rate limit reached. Retrying with backoff." },
+                error: {
+                  type: "ProviderRateLimitError" as const,
+                  message: "Rate limit reached. Retrying with backoff.",
+                },
               }
             : undefined,
           time: { created: STORY_TIME, completed: finished ? STORY_TIME + 300 : undefined },
@@ -324,7 +327,7 @@ function CompactSessionStory() {
               message: 'Error: {"error":{"type":"ProviderError","message":"The provider rejected the summary."}}',
             },
           }
-        : { summary: state.summary, recent: "" }),
+        : { summary: state.summary }),
       time: { created: STORY_TIME + 10 },
     }
 

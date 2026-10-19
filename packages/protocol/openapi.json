@@ -18992,9 +18992,6 @@
           "summary": {
             "type": "string"
           },
-          "recent": {
-            "type": "string"
-          },
           "providerContext": {
             "$ref": "#/components/schemas/Session.ProviderContext"
           },
@@ -19005,7 +19002,7 @@
             "$ref": "#/components/schemas/TokenUsage.Info"
           }
         },
-        "required": ["type", "id", "time", "status", "reason", "summary", "recent"],
+        "required": ["type", "id", "time", "status", "reason", "summary"],
         "additionalProperties": false
       },
       "Session.Message.Compaction.Failed": {
@@ -19085,12 +19082,9 @@
           },
           "summary": {
             "type": "string"
-          },
-          "recent": {
-            "type": "string"
           }
         },
-        "required": ["type", "id", "time", "status", "reason", "summary", "recent"],
+        "required": ["type", "id", "time", "status", "reason", "summary"],
         "additionalProperties": false
       },
       "Session.Message.ID": {

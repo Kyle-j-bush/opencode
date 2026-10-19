@@ -91,7 +91,7 @@ const layer = Layer.effect(
                   if (next?.type === "compaction")
                     yield* bus.publishAll([
                       [SessionEvent.InboxDelivered, { sessionID, inboxID: next.id }],
-                      [SessionEvent.Compaction.Started, { sessionID, reason: "manual", recent: "", inputID: next.id }],
+                      [SessionEvent.Compaction.Started, { sessionID, reason: "manual", inputID: next.id }],
                     ])
                   if (next?.type === "move")
                     yield* restore(

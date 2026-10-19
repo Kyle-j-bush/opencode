@@ -252,7 +252,6 @@ export const CompactionRunning = Schema.Struct({
   status: Schema.tag("running"),
   reason: Schema.Literals(["auto", "manual"]),
   summary: Schema.String,
-  recent: Schema.String,
 }).annotate({ identifier: "Session.Message.Compaction.Running" })
 
 export interface CompactionCompleted extends Schema.Schema.Type<typeof CompactionCompleted> {}
@@ -263,7 +262,6 @@ export const CompactionCompleted = Schema.Struct({
   model: Model.Ref.pipe(optional),
   native: Native.pipe(optional),
   summary: Schema.String,
-  recent: Schema.String,
   providerContext: SessionProviderContext.Info.pipe(optional),
   ...CompactionUsage,
 }).annotate({ identifier: "Session.Message.Compaction.Completed" })

@@ -403,7 +403,6 @@ export type SessionMessageCompactionRunning = {
   status: "running"
   reason: "auto" | "manual"
   summary: string
-  recent: string
 }
 
 export type FileSystemEntry = { path: RelativePath; type: "file" | "directory" }
@@ -1360,7 +1359,7 @@ export type SessionCompactionStarted = {
   type: "session.compaction.started"
   durable: { aggregateID: string; seq: EventSeq; version: 1 }
   location?: LocationRef
-  data: { sessionID: SessionID; reason: "auto" | "manual"; recent: string; inputID?: SessionMessageID }
+  data: { sessionID: SessionID; reason: "auto" | "manual"; inputID?: SessionMessageID }
 }
 
 export type SessionCompactionFailed = {
@@ -2036,7 +2035,6 @@ export type SessionMessageCompactionCompleted = {
   model?: ModelRef
   native?: SessionMessageNative
   summary: string
-  recent: string
   providerContext?: SessionProviderContext
   cost?: MoneyUSD
   tokens?: TokenUsageInfo
@@ -2056,7 +2054,6 @@ export type SessionCompactionEnded = {
     native?: SessionMessageNative1
     providerContext?: SessionProviderContext
     text: string
-    recent: string
     cost?: MoneyUSD
     tokens?: TokenUsageInfo
   }

@@ -429,7 +429,7 @@ export function configured(options?: Options) {
                                 seq,
                                 created: event.created ?? 0,
                                 type: versionedType(definition.type, durable.version),
-                                data: encoded,
+                                data: SessionLegacy.storedEvent(definition.type, encoded),
                               },
                             ])
                             .run()
@@ -643,7 +643,7 @@ export function configured(options?: Options) {
                                 seq,
                                 created: event.created,
                                 type: versionedType(item.definition.type, item.definition.durable.version),
-                                data: encoded,
+                                data: SessionLegacy.storedEvent(item.definition.type, encoded),
                               })
                           }
                           yield* db

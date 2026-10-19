@@ -677,7 +677,8 @@ describe("V1Migration.transformSession", () => {
     expect(result.messages[2].data).toMatchObject({
       reason: "auto",
       summary: "summary",
-      recent: "[User]: question\n\n[Assistant]: answer",
+      metadata: { recent: "[User]: question\n\n[Assistant]: answer" },
+      recent: "",
     })
     expect(result.session.agent).toBe("existing")
     expect(result.session.model).toEqual(existing.model)

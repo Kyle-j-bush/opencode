@@ -419,7 +419,6 @@ export function update(adapter: Adapter, event: SessionEvent.DurableEvent) {
             metadata: event.metadata,
             reason: event.data.reason,
             summary: "",
-            recent: event.data.recent ?? "",
             time: { created },
           }),
         ),
@@ -436,7 +435,6 @@ export function update(adapter: Adapter, event: SessionEvent.DurableEvent) {
               native: event.data.native,
               summary: event.data.text,
               providerContext: event.data.providerContext,
-              recent: event.data.recent,
               cost: event.data.cost,
               tokens: event.data.tokens,
             })
@@ -453,7 +451,6 @@ export function update(adapter: Adapter, event: SessionEvent.DurableEvent) {
               native: event.data.native,
               summary: event.data.text,
               providerContext: event.data.providerContext,
-              recent: event.data.recent,
               cost: event.data.cost,
               tokens: event.data.tokens,
               time: { created },
