@@ -18,9 +18,9 @@ const timelineDetail = timelinePresets[2].value
 
 // Ages in milliseconds, so the panel shows seconds, minutes and an hour-long run side by side.
 const subagents = [
-  { id: "ses_child_scroll", agent: "general", description: "Investigate Linux scroll jacking", age: 12_000 },
-  { id: "ses_child_audit", agent: "explore", description: "Audit the timeline projection", age: 65_000 },
-  { id: "ses_child_search", agent: "explore", description: "Search for shell metadata", age: 3_000 },
+  { id: "ses_child_scroll", agent: "alpha", description: "Investigate Linux scroll jacking", age: 12_000 },
+  { id: "ses_child_audit", agent: "beta", description: "Audit the timeline projection", age: 65_000 },
+  { id: "ses_child_search", agent: "beta", description: "Search for shell metadata", age: 3_000 },
 ]
 
 const shells = [
