@@ -12,8 +12,8 @@ Workflow for interactively exercising the V2 CLI/TUI and server while developing
 opencode V2 is a client/server system, not a single monolithic process:
 
 - **Server process** runs the Effect HTTP API (`packages/server`) and owns all domain state: sessions, database, plugins, permissions, Location services. It's started by the `serve` command (`packages/cli/src/commands/handlers/serve.ts`).
-- **TUI process** is a separate process that runs no application logic itself — it's an HTTP/SSE client of the server via the generated SDK (`createOpencodeClient` / `sdk.client.v2`).
-- **Discovery**: CLI processes find the shared server through a JSON registration file at `~/.local/state/opencode/service.json` (or `service-local.json` for the local/dev channel) containing `{id, version, url, pid}`. A separate password file under `~/.config/opencode/service.json` provides HTTP Basic auth. Before reusing a registration, the client calls `GET /health` to confirm the server is alive, authenticated, and version-compatible.
+- **TUI process** is a separate process that runs no application logic itself — it's an HTTP/SSE client of the server via `@opencode/client` (`OpenCode.make`).
+- **Discovery**: CLI processes find the shared server through a JSON registration file at `~/.local/state/opencode/service.json` (or `service-local.json` for the local/dev channel) containing `{id, version, url, pid, password}`; the password is used for HTTP Basic auth. Before reusing a registration, the client calls `GET /api/info` to confirm the server is alive, is the registered PID, and is version-compatible. `opencode service status` prints the registered URL.
 - **Sharing**: because of this registration/health-check dance, many concurrent `opencode`/TUI invocations converge on one shared background daemon rather than each spawning their own. If no compatible healthy daemon is found, a new one is spawned detached (`serve --service`) and registers itself.
 - **`bun dev service start|status|stop|restart`** manages this shared background daemon's lifecycle directly — useful when you need to force a fresh server, confirm one is running, or kill a stuck one.
 - **Standalone mode** (`--standalone`) opts a single invocation out of the shared daemon: it spawns a private one-off `serve --stdio --port 0` child tied to that invocation's lifetime, with its own random password. Use this to isolate a debugging session from your other running opencode sessions.
@@ -21,8 +21,9 @@ opencode V2 is a client/server system, not a single monolithic process:
 
 ## Starting the dev TUI
 
-- This package is the V2 CLI adapter. Run its `dev` script when testing the TUI; do not use the repository-root `bun dev`, which launches the legacy `packages/opencode` CLI.
-- Run commands from `packages/cli`. Use `bun dev` for most debugging so the TUI starts with a private V2 server.
+- `packages/cli` is the CLI and TUI entrypoint. `bun dev` from `packages/cli` and the repository-root `bun dev` both run `packages/cli/src/index.ts`.
+- `bun dev` connects to the shared local-channel background service (`service-local.json`), starting it if needed. Every worktree on the machine shares that service. Add `--standalone` for a private server tied to this one process.
+- Use `bun run dev:live` from the repository root to run this worktree's TUI against the installed `opencode` background server and your real sessions.
 
 ## Interactive debugging with termctrl
 
@@ -57,7 +58,7 @@ termctrl resize opencode-v2-dev --cols 100 --rows 30
 termctrl show opencode-v2-dev
 ```
 
-- Source changes may require restarting the process. Use `termctrl restart opencode-v2-dev` rather than assuming the running TUI reloaded the change.
+- Source changes may require restarting the process. Use `termctrl restart opencode-v2-dev` rather than assuming the running TUI reloaded the change. Restarting the TUI does not restart the shared background service, so run `bun dev service restart` after server-side changes, or use `--standalone`.
 - To exercise background-service behavior, use `bun dev service start`, `bun dev service status`, and `bun dev service stop`.
 - Always clean up the Terminal Control session when the check is complete:
 
@@ -67,13 +68,13 @@ termctrl stop opencode-v2-dev
 
 ## Comparing V2 against the legacy TUI
 
-Run both versions in separate Terminal Control sessions and save PNG-only captures at equivalent states:
+The legacy V1 CLI is still published as `opencode-ai` on npm; V2 is `@opencode/cli`. Run both versions in separate Terminal Control sessions and save PNG-only captures at equivalent states:
 
 ```bash
 # From packages/cli: local V2 TUI
 termctrl start opencode-v2-dev --host opentui --cols 112 --rows 34 -- bun dev
 
-# Released legacy TUI behavior reference
+# Released legacy V1 TUI behavior reference
 termctrl start opencode-legacy --host opentui --cols 112 --rows 34 -- bunx opencode-ai@latest
 
 termctrl save opencode-v2-dev --format png --out /tmp/opencode/v2.png
@@ -90,7 +91,7 @@ termctrl save opencode-legacy --format png --out /tmp/opencode/legacy.png
 - `bun dev api` accepts either an OpenAPI operation ID or a raw HTTP method plus path:
 
 ```bash
-bun dev api get /health
+bun dev api get /api/info
 bun dev api get /openapi.json
 bun dev api <operationId> --param key=value
 ```
@@ -99,13 +100,13 @@ bun dev api <operationId> --param key=value
 - If no compatible background server is registered, `bun dev api` starts one through the daemon service. Use `bun dev service status`, `bun dev service restart`, and `bun dev service stop` when you need explicit lifecycle control.
 - Prefer raw method/path calls for quick server debugging and operation IDs when exercising documented OpenAPI routes with path or query parameters.
 
-## Auditing installed `opencode2` sessions
+## Auditing installed `opencode` sessions
 
-Installed next-channel sessions normally use `~/.local/share/opencode/opencode-next.db` and `~/.local/share/opencode/log/opencode.log`; `OPENCODE_DB` can override the database. Before calling `opencode2 api`, inspect `~/.local/state/opencode/service.json` because the command may start a daemon when none is healthy.
+Installed (released) sessions use `~/.local/share/opencode/opencode.db` and `~/.local/share/opencode/log/opencode.log`. A local/dev checkout uses `opencode-local.db` and `opencode-local.log` instead, and `OPENCODE_DB` overrides the database. Run `opencode service status` before `opencode api`, because `opencode api` starts a server when none is healthy.
 
 For a supplied `ses_...` ID, compare three sources:
 
-- `opencode2 api get /api/session/active` and the Session/message endpoints for live server state.
+- `opencode api get /api/session/active` and the Session/message endpoints for live server state.
 - The database's ordered `event` rows for durable history.
 - `packages/tui/src/context/data.tsx` and the relevant route for client projection and rendering.
 
@@ -141,16 +142,24 @@ grep 'role=server' ~/.local/share/opencode/log/opencode-local.log
 
 ## Heap snapshots
 
-The CLI installs a `SIGUSR1` listener on non-Windows processes in `packages/cli/src/heap.ts`. Use it to capture the installed `opencode2` server without restarting it or attaching an inspector.
+On every platform, including Windows, capture the running background server without restarting it or attaching an inspector:
+
+```bash
+opencode debug heap-dump
+```
+
+It discovers the already-running service (never starts or replaces one), calls `POST /api/debug/heap-dump`, waits until the file is complete, and prints its server-local path. Pass `--server <url>` (with `OPENCODE_PASSWORD`) for a server started with `serve`. A 404 means the running server predates the endpoint.
+
+The Unix `SIGUSR1` listener in `packages/cli/src/heap.ts` shares the same writer (`packages/util/src/heap-snapshot.ts`) and is still useful for a process that is not an HTTP server, such as a TUI client:
 
 1. Find the processes and inspect their roles and memory:
 
 ```bash
-pgrep -a -f 'opencode2\.exe|opencode2'
+pgrep -af opencode
 ps -o pid,ppid,rss,vsz,lstart,etime,cmd -p <pid>,<pid>
 ```
 
-2. Signal the process whose heap needs investigation. For shared-service memory, target the `opencode2.exe serve --service` child, not the short wrapper/TUI process:
+2. Signal the process whose heap needs investigation. For shared-service memory, target the `opencode serve --service` process, not a TUI process:
 
 ```bash
 kill -USR1 <server-pid>
@@ -189,13 +198,13 @@ Heap serialization itself can temporarily increase RSS and allocator high-water 
 
 The CLI installs a `SIGPROF` listener on non-Windows processes in `packages/cli/src/cpu-profile.ts`. One signal starts a ten-second CPU profile and stops it automatically; additional signals are ignored while a profile is active. There is no CPU profile CLI flag or environment variable.
 
-1. Get the PID from the health endpoint. For shared-service performance, target the server PID returned here rather than the short wrapper or TUI process:
+1. Get the PID from the info endpoint. For shared-service performance, target the server PID returned here rather than a TUI process:
 
 ```bash
-opencode2 api get /api/health
+opencode api get /api/info
 ```
 
-Use `bun dev api get /api/health` instead when targeting the local/dev channel.
+Use `bun dev api get /api/info` instead when targeting the local/dev channel.
 
 2. Start the capture:
 
