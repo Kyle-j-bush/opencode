@@ -664,14 +664,7 @@ export type ModelCost = {
   cache: { read: MoneyUSDPerMillionTokens; write: MoneyUSDPerMillionTokens }
 }
 
-export type VoiceModel = {
-  model: string
-  provider: string
-  transports: Array<VoiceTransportType>
-  available: boolean
-  integration?: string | undefined
-  workspace?: string | undefined
-}
+export type VoiceModel = { model: string; provider: string; transports: Array<VoiceTransportType>; available: boolean }
 
 export type VoiceTransport = VoiceWebRTCTransport | VoiceWebSocketTransport
 
@@ -1998,7 +1991,7 @@ export type ProviderInfo = {
 
 export type VoiceModelsResponse = { data: { models: Array<VoiceModel>; default?: string | undefined } }
 
-export type VoiceSessionResponse = { data: { transport: VoiceTransport; session?: { id: string } | undefined } }
+export type VoiceSessionResponse = { data: { transport: VoiceTransport } }
 
 export type CredentialValue = CredentialOAuth | CredentialKey | CredentialExternal
 
@@ -2349,7 +2342,7 @@ export type ConfigEntry =
         experimental?: {
           portable_shell_scanner?: boolean
           todo?: boolean
-          precompute_compaction?: boolean
+          background_compaction?: boolean
           subagent_depth?: number
           location_idle_timeout?: string | false
           policies?: Array<{
@@ -5008,13 +5001,6 @@ export type VoiceSessionInput = {
 
 export type VoiceSessionOutput = VoiceSessionResponse["data"]
 
-export type VoiceInstructionsInput = {
-  readonly sessionID: { readonly sessionID: string }["sessionID"]
-  readonly instructions: { readonly instructions: string }["instructions"]
-}
-
-export type VoiceInstructionsOutput = void
-
 export type ProviderListInput = {
   readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
 }
@@ -6019,7 +6005,13 @@ export type VcsDiffInput = {
 
 export type VcsDiffOutput = { location: LocationPublicRef; data: Array<FileDiffInfo> }
 
-export type DebugHeapDumpOutput = { path: string; pid: number }
+export type DebugHeapDumpInput = { readonly directory?: { readonly directory?: string | undefined }["directory"] }
+
+export type DebugHeapDumpOutput = {
+  path: string
+  pid: number
+  memory: { rss: number; heapTotal: number; heapUsed: number; external: number; arrayBuffers: number }
+}
 
 export type DebugLocationListOutput = Array<LocationPublicRef>
 
